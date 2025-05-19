@@ -7,18 +7,23 @@ const app = express();
 app.use(express.json());
 
 app.post("/webhook", async (req, res) => {
+  // 🟡 Always log the full incoming payload
+  console.log("📥 Incoming webhook body:");
+  console.log(JSON.stringify(req.body, null, 2));
+
   const { attachments, contact } = req.body;
 
   if (!attachments || attachments.length === 0) {
+    console.log("⚠️ No attachments found in this message.");
     return res.status(200).send("No attachments received");
   }
 
   const file = attachments[0];
   const fileUrl = file.url;
-  const fileName = `${contact.name || "contact"}_${Date.now()}_${file.file_name}`;
+  const fileName = `${(contact?.name || "contact")}_${Date.now()}_${file.file_name}`;
   const filePath = path.join(__dirname, "downloads", fileName);
 
-  // Make sure 'downloads' folder exists
+  // ✅ Ensure 'downloads' folder exists
   fs.mkdirSync(path.join(__dirname, "downloads"), { recursive: true });
 
   try {
@@ -37,7 +42,7 @@ app.post("/webhook", async (req, res) => {
       res.status(500).send("Failed to save file");
     });
   } catch (err) {
-    console.error("❌ Error downloading file:", err);
+    console.error("❌ Error downloading file:", err.message);
     res.status(500).send("Failed to download file");
   }
 });
